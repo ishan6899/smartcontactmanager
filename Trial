@@ -1,0 +1,96 @@
+import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { GridOptions } from 'ag-grid-community';
+
+@Component({
+  selector: 'app-ag-grid',
+  templateUrl: './ag-grid.component.html',
+  styleUrls: ['./ag-grid.component.css'],
+})
+export class AgGridComponent implements OnInit {
+  private gridApi: any;
+  private gridColumnApi: any;
+
+  public columnDefs: any[];
+  public rowData: any[];
+
+  public detailGridOptions: GridOptions = {
+    columnDefs: [
+      { field: 'date', cellRendererParams: { suppressCount: true, innerRenderer: this.dateRenderer } },
+      { field: 'task' },
+      { field: 'priority' },
+    ],
+    rowData: [],
+    defaultColDef: { flex: 1 },
+    pagination: true,
+    paginationPageSize: 5,
+    filter: true,
+  };
+
+  constructor(private http: HttpClient) {}
+
+  ngOnInit() {
+    this.columnDefs = [
+      { field: 'name', cellRenderer: 'agGroupCellRenderer', cellRendererParams: { suppressCount: true, innerRenderer: this.nameRenderer } },
+      { field: 'count' },
+      { field: 'totalCount' },
+    ];
+
+    this.rowData = [
+      { name: 'John', count: 3, totalCount: 5 },
+      { name: 'Jane', count: 2, totalCount: 4 },
+      { name: 'Bob', count: 1, totalCount: 3 },
+    ];
+  }
+
+  onGridReady(params: any) {
+    this.gridApi = params.api;
+    this.gridColumnApi = params.columnApi;
+  }
+
+  onCellClicked(event: any) {
+    if (event.colDef.field === 'name' && event.node.expanded) {
+      const eDetailGrid = document.createElement('div');
+      const childGrid = new Grid(eDetailGrid, this.detailGridOptions);
+      childGrid.api.showLoadingOverlay();
+      childGrid.api.setServerSideDatasource(this.createChildDatasource(event.data.name));
+      event.node.detailGridInfo = { detailGrid: childGrid, eDetailGrid };
+    }
+  }
+
+  createChildDatasource(name: string) {
+    return {
+      getRows: (params: any) => {
+        const url = `https://your-api-url-here.com/data?name=${name}`;
+        const startRow = params.request.startRow;
+        const endRow = params.request.endRow;
+        this.http.get(url).subscribe((data: any) => {
+          const rowsThisPage = data.data.slice(startRow, endRow);
+          const lastRow = data.totalCount <= endRow ? data.totalCount : -1;
+          params.successCallback(rowsThisPage, lastRow);
+        });
+      },
+    };
+  }
+
+  nameRenderer(params: any) {
+    const eDiv = document.createElement('div');
+    const eIcon = document.createElement('span');
+    const eValue = document.createElement('span');
+    eIcon.innerHTML = '<i class="fas fa-user"></i>';
+    eValue.innerHTML = params.value;
+    eDiv.appendChild(eIcon);
+    eDiv.appendChild(eValue);
+    if (params.node.expanded) {
+      eIcon.innerHTML = '<i class="fas fa-user-minus"></i>';
+    } else {
+      eIcon.innerHTML = '<i class="fas fa-user-plus"></i>';
+    }
+    eIcon.addEventListener('click', () => {
+      params.node.setExpanded(!params.node.expanded);
+    });
+    return eDiv;
+  }
+
+  dateRenderer(params: any) {
+    const eDiv = document
