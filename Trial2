@@ -1,0 +1,38 @@
+  dateRenderer(params: any) {
+    const eDiv = document.createElement('div');
+    const eIcon = document.createElement('span');
+    const eValue = document.createElement('span');
+    eIcon.innerHTML = '<i class="fas fa-calendar"></i>';
+    eValue.innerHTML = params.value;
+    eDiv.appendChild(eIcon);
+    eDiv.appendChild(eValue);
+    if (params.node.expanded) {
+      eIcon.innerHTML = '<i class="fas fa-calendar-minus"></i>';
+    } else {
+      eIcon.innerHTML = '<i class="fas fa-calendar-plus"></i>';
+    }
+    eIcon.addEventListener('click', () => {
+      this.toggleExpand(params.node);
+    });
+    return eDiv;
+  }
+
+  toggleExpand(node: any) {
+    if (node.expanded) {
+      node.setExpanded(false);
+      if (node.detailGridInfo) {
+        const { detailGrid, eDetailGrid } = node.detailGridInfo;
+        detailGrid.api.destroy();
+        eDetailGrid.remove();
+        node.detailGridInfo = null;
+      }
+    } else {
+      node.setExpanded(true);
+      const eDetailGrid = document.createElement('div');
+      const childGrid = new Grid(eDetailGrid, this.detailGridOptions);
+      childGrid.api.showLoadingOverlay();
+      childGrid.api.setServerSideDatasource(this.createChildDatasource(node.parent.data.name, node.data.date));
+      node.detailGridInfo = { detailGrid: childGrid, eDetailGrid };
+    }
+  }
+}
