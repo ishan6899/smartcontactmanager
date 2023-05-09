@@ -1,0 +1,183 @@
+//Basic component
+
+export class HierarchyTreeComponent implements OnInit {
+  hierarchyRoot: HierarchyNode;
+
+  constructor(private http: HttpClient) { }
+
+  ngOnInit() {
+    this.http.get<HierarchyNode>('https://example.com/hierarchy')
+      .subscribe(hierarchyRoot => {
+        this.hierarchyRoot = hierarchyRoot;
+      });
+  }
+
+  getTreeData(): any[] {
+    return [this.createNode(this.hierarchyRoot)];
+  }
+
+  private createNode(hierarchyNode: HierarchyNode): any {
+    const node = {
+      name: hierarchyNode.currentName,
+      children: []
+    };
+
+    if (hierarchyNode.downstreamHierarchy) {
+      for (const child of hierarchyNode.downstreamHierarchy) {
+        node.children.push(this.createNode(child));
+      }
+    }
+
+    if (hierarchyNode.upstreamHierarchy) {
+      for (const parent of hierarchyNode.upstreamHierarchy) {
+        const parentNode = this.createNode(parent);
+        const existingNode = node.children.find(child => child.name === parentNode.name);
+        if (existingNode) {
+          // Merge parent node with existing node
+          existingNode.children = parentNode.children.concat(existingNode.children);
+        } else {
+          // Add parent node as a new child node
+          node.children.push(parentNode);
+        }
+      }
+    }
+
+    return node;
+  }
+}
+
+//HTML
+
+<div *ngIf="displayHierarchy">
+  <p-dialog header="Hierarchy" [(visible)]="displayHierarchy" [modal]="true" [width]="'70%'">
+    <p-tree [value]="getTreeData()" [selectionMode]="'single'">
+      <ng-template let-node pTemplate="default">
+        <span>{{node.name}}</span>
+      </ng-template>
+    </p-tree>
+    <button (click)="closeModal()">Close</button>
+  </p-dialog>
+</div>
+
+
+
+// TS with mock data
+
+import { Component } from '@angular/core';
+
+interface HierarchyNode {
+  currentName: string;
+  downstreamHierarchy?: HierarchyNode[];
+}
+
+@Component({
+  selector: 'app-hierarchy',
+  templateUrl: './hierarchy.component.html',
+  styleUrls: ['./hierarchy.component.css']
+})
+export class HierarchyComponent {
+  hierarchyData: HierarchyNode[] = [];
+
+  displayHierarchy = false;
+
+  openModal() {
+    // Make API call to get hierarchy data
+    // this.http.get<HierarchyNode>('https://example.com/hierarchy')
+    //   .subscribe(hierarchyData => {
+    //     this.hierarchyData = hierarchyData;
+    //   });
+
+    // Mock hierarchy data
+    this.hierarchyData = [
+      {
+        currentName: 'A',
+        downstreamHierarchy: [
+          {
+            currentName: 'B'
+          },
+          {
+            currentName: 'C',
+            downstreamHierarchy: [
+              {
+                currentName: 'D'
+              },
+              {
+                currentName: 'E'
+              }
+            ]
+          }
+        ]
+      }
+    ];
+
+    this.displayHierarchy = true;
+  }
+
+  closeModal() {
+    this.displayHierarchy = false;
+  }
+
+  getTreeData(): any[] {
+    const treeData = [];
+
+    // Recursively build the tree data
+    const buildTree = (node: HierarchyNode, parent: any) => {
+      const treeNode = {
+        label: node.currentName,
+        children: []
+      };
+
+      if (parent) {
+        parent.children.push(treeNode);
+      } else {
+        treeData.push(treeNode);
+      }
+
+      if (node.downstreamHierarchy) {
+        node.downstreamHierarchy.forEach(child => {
+          buildTree(child, treeNode);
+        });
+      }
+    };
+
+    this.hierarchyData.forEach(node => {
+      buildTree(node, null);
+    });
+
+    return treeData;
+  }
+}
+
+//Build tree method 2
+buildTree(node: HierarchyNode, parent: any, isUpstream?: boolean) {
+  const treeNode = {
+    label: node.currentName,
+    children: []
+  };
+
+  if (parent) {
+    if (isUpstream) {
+      parent.children.unshift(treeNode); // Add node at the beginning of children array for upstream hierarchy
+    } else {
+      parent.children.push(treeNode); // Add node at the end of children array for downstream hierarchy
+    }
+  } else {
+    treeData.push(treeNode); // Add node to the top level of the tree for the root node
+  }
+
+  // Recursively traverse the hierarchy tree for both upstream and downstream hierarchy
+  if (node.downstreamHierarchy) {
+    node.downstreamHierarchy.forEach(child => {
+      this.buildTree(child, treeNode, false);
+    });
+  }
+
+  if (node.upstreamHierarchy) {
+    node.upstreamHierarchy.forEach(parent => {
+      this.buildTree(parent, treeNode, true);
+    });
+  }
+}
+
+//html 2
+<button (click)="openModal()">Generate Hierarchy</button>
