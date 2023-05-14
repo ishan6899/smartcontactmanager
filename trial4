@@ -1,0 +1,137 @@
+import {Component, ElementRef, Input, ViewChild} from '@angular/core';
+import * as d3 from 'd3'
+import {drag} from "d3";
+interface SimulationNode extends Node, d3.SimulationNodeDatum {}
+
+interface Node {
+  id: number|string;
+  name: string;
+  parents: number[];
+  children: number[];
+}
+interface LinkData {
+  source: SimulationNode;
+  target: SimulationNode;
+}
+
+interface NodeData extends SimulationNode {
+  id: string;
+}
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent {
+  nodes: Node[] = [
+    {id: 1, name: 'Parent 1', parents: [], children: [3]},
+    {id: 2, name: 'Parent 2', parents: [], children: [3, 4]},
+    {id: 3, name: 'Child 1', parents: [1, 2], children: [5]},
+    {id: 4, name: 'Child 2', parents: [2], children: []},
+    {id: 5, name: 'Child 3', parents: [3], children: []},
+  ];
+  links = [
+    {source: 0, target: 2},
+    {source: 1, target: 2},
+    {source: 1, target: 3},
+    {source: 2, target: 4}
+  ]
+  @ViewChild('graph', {static: true})
+  private graph!: ElementRef<HTMLDivElement>;
+
+  ngOnInit() {
+    console.log("gee")
+    const nodes: Node[] = [
+      {id: 1, name: 'Parent 1', parents: [], children: [3]},
+      {id: 2, name: 'Parent 2', parents: [], children: [3, 4]},
+      {id: 3, name: 'Child 1', parents: [1, 2], children: [5]},
+      {id: 4, name: 'Child 2', parents: [2], children: []},
+      {id: 5, name: 'Child 3', parents: [3], children: []},
+    ];
+    const links = [
+      {source: 0, target: 2},
+      {source: 1, target: 2},
+      {source: 1, target: 3},
+      {source: 2, target: 4}
+    ]
+    console.log(links)
+
+
+//
+//     const simulation = d3.forceSimulation(<any>nodes)
+//       .force('link', d3.forceLink(links))
+//       .force('charge', d3.forceManyBody())
+//       .force('center', d3.forceCenter());
+// console.log(simulation)
+//     const svg = d3.select(this.graph.nativeElement)
+//       .append('svg')
+//       .attr('viewBox', [-500, -500, 1000, 1000]);
+//     const link = svg.append('g')
+//       .attr('stroke', '#999')
+//       .attr('stroke-opacity', 0.6)
+//       .selectAll('line')
+//       .data(links)
+//       .join('line');
+//     console.log(link)
+
+
+    // const node = svg.append('g')
+    //   .attr('stroke', '#fff')
+    //   .attr('stroke-width', 1.5)
+    //   .selectAll('circle')
+    //   .data(nodes)
+    //   .join('circle')
+    //   .attr('r', 5)
+    //   .attr('fill', d => d.children.length === 0 ? '#ccc' : '#007bff')
+    //   .on('click', d => console.log(d));
+    //
+    // node.append('title')
+    //   .text(d => d.name);
+
+
+    const simulation = d3.forceSimulation<any>(nodes)
+      .force('link', d3.forceLink(links))
+      .force('charge', d3.forceManyBody().strength(-100))
+      .force('center', d3.forceCenter());
+
+    const svg = d3.select(this.graph.nativeElement)
+      .append('svg')
+      .attr('viewBox', [-500, -500, 1000, 1000]);
+
+    const link = svg.append('g')
+      .attr('stroke', '#999')
+      .attr('stroke-opacity', 0.6)
+      .selectAll('line')
+      .data(links)
+      .join('line');
+
+    const node = svg.append('g')
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 1.5)
+      .selectAll('circle')
+      .data(nodes)
+      .join('text')
+      .text(false)
+      .attr('r', 5)
+      .attr('fill', d => d.children.length === 0 ? '#ccc' : '#007bff')
+
+
+
+
+    simulation.on('tick', () => {
+      link
+        .attr('x1', d => (d.source as any).x)
+        .attr('y1', d => (d.source as any).y)
+        .attr('x2', d => (d.target as any).x)
+        .attr('y2', d => (d.target as any).y);
+
+      node
+        .attr('cx', d => (d as any).x)
+        .attr('cy', d => (d as any).y);
+    });
+
+
+
+  }
+}
