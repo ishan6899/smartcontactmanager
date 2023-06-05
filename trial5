@@ -147,4 +147,67 @@ console.log(edges);
 // You can then use 'nodes' and 'edges' in your graph visualization library, such as vis.js, to display the graph
 
 
+import { Component, OnInit } from '@angular/core';
+
+@Component({
+  selector: 'app-graph-component',
+  template: `
+    <!-- Your graph visualization HTML template goes here -->
+  `,
+})
+export class GraphComponent implements OnInit {
+  javaObject: any; // Assuming you have the Java object assigned to this variable
+
+  nodes: any[] = [];
+  edges: any[] = [];
+
+  ngOnInit() {
+    // Start traversing the hierarchy with the received Java object
+    this.traverseHierarchy(this.javaObject);
+
+    // Now you have the nodes and edges in the desired format
+    console.log(this.nodes);
+    console.log(this.edges);
+
+    // You can then use 'this.nodes' and 'this.edges' in your graph visualization library to display the graph
+  }
+
+  // Function to recursively traverse the hierarchy and populate nodes and edges
+  traverseHierarchy(obj: any) {
+    // Create a unique ID for the current node
+    const nodeId = obj.name + '_' + Math.random().toString(36).substr(2, 9);
+
+    // Add the current node to the 'nodes' array
+    this.nodes.push({ id: nodeId, label: obj.name });
+
+    // Process the 'down' list
+    if (obj.down && obj.down.length > 0) {
+      obj.down.forEach((downObj: any) => {
+        // Create an ID for the downstream node
+        const downNodeId = downObj.name + '_' + Math.random().toString(36).substr(2, 9);
+
+        // Add the edge from current node to downstream node
+        this.edges.push({ from: nodeId, to: downNodeId });
+
+        // Recursively traverse the downstream hierarchy
+        this.traverseHierarchy(downObj);
+      });
+    }
+
+    // Process the 'up' list
+    if (obj.up && obj.up.length > 0) {
+      obj.up.forEach((upObj: any) => {
+        // Create an ID for the upstream node
+        const upNodeId = upObj.name + '_' + Math.random().toString(36).substr(2, 9);
+
+        // Add the edge from upstream node to current node
+        this.edges.push({ from: upNodeId, to: nodeId });
+
+        // Recursively traverse the upstream hierarchy
+        this.traverseHierarchy(upObj);
+      });
+    }
+  }
+}
+
 
