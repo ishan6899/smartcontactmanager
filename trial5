@@ -94,7 +94,57 @@ export class AppComponent {
       }
     };
     this.graph = new Network(container, <any>data, <any>options);
-// Compute the distinct nodes from the links.
+// Compute the distinct nodes from the // Assuming you receive the Java object as 'javaObject' from the API response
 
+// Create an empty array to store nodes and edges
+const nodes = [];
+const edges = [];
+
+// Function to recursively traverse the hierarchy and populate nodes and edges
+function traverseHierarchy(obj) {
+  // Create a unique ID for the current node
+  const nodeId = obj.name + '_' + Math.random().toString(36).substr(2, 9);
+
+  // Add the current node to the 'nodes' array
+  nodes.push({ id: nodeId, label: obj.name });
+
+  // Process the 'down' list
+  if (obj.down && obj.down.length > 0) {
+    obj.down.forEach(downObj => {
+      // Create an ID for the downstream node
+      const downNodeId = downObj.name + '_' + Math.random().toString(36).substr(2, 9);
+
+      // Add the edge from current node to downstream node
+      edges.push({ from: nodeId, to: downNodeId });
+
+      // Recursively traverse the downstream hierarchy
+      traverseHierarchy(downObj);
+    });
+  }
+
+  // Process the 'up' list
+  if (obj.up && obj.up.length > 0) {
+    obj.up.forEach(upObj => {
+      // Create an ID for the upstream node
+      const upNodeId = upObj.name + '_' + Math.random().toString(36).substr(2, 9);
+
+      // Add the edge from upstream node to current node
+      edges.push({ from: upNodeId, to: nodeId });
+
+      // Recursively traverse the upstream hierarchy
+      traverseHierarchy(upObj);
+    });
   }
 }
+
+// Start traversing the hierarchy with the received Java object
+traverseHierarchy(javaObject);
+
+// Now you have the nodes and edges in the desired format
+console.log(nodes);
+console.log(edges);
+
+// You can then use 'nodes' and 'edges' in your graph visualization library, such as vis.js, to display the graph
+
+
+
