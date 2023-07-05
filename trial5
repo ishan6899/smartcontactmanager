@@ -210,4 +210,21 @@ export class GraphComponent implements OnInit {
   }
 }
 
+  public static List<YearMonth> retrieveMonthsBetweenDates(LocalDate startDate, LocalDate endDate) {
+        List<YearMonth> months = new ArrayList<>();
 
+        // Adjust the start and end dates to the first and last day of their respective months
+        LocalDate adjustedStartDate = startDate.withDayOfMonth(1);
+        LocalDate adjustedEndDate = endDate.withDayOfMonth(endDate.lengthOfMonth());
+
+        // Calculate the number of months between the adjusted start and end dates
+        long numOfMonths = ChronoUnit.MONTHS.between(adjustedStartDate, adjustedEndDate) + 1;
+
+        // Add each month to the list
+        for (int i = 0; i < numOfMonths; i++) {
+            YearMonth month = adjustedStartDate.plusMonths(i).atYear(adjustedStartDate.getYear()).atMonth(adjustedStartDate.getMonth());
+            months.add(month);
+        }
+
+        return months;
+    }
