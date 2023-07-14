@@ -228,3 +228,57 @@ export class GraphComponent implements OnInit {
 
         return months;
     }
+import { Component } from '@angular/core';
+import { DatePipe } from '@angular/common';
+
+@Component({
+  selector: 'app-example',
+  template: `
+    <div>
+      <p>Start Date: {{ startDate }}</p>
+      <p>End Date: {{ endDate }}</p>
+      <button (click)="sendData()">Send Data</button>
+    </div>
+  `
+})
+export class ExampleComponent {
+  monthYearString = "JANUARY 2022";
+  startDate: string;
+  endDate: string;
+  name1 = "Your Name";
+
+  constructor(private datePipe: DatePipe) {}
+
+  extractDates() {
+    const monthYearArray = this.monthYearString.split(' ');
+    const month = monthYearArray[0];
+    const year = Number(monthYearArray[1]);
+
+    // Extracting the start and end dates
+    const startDate = new Date(year, this.getMonthIndex(month), 1);
+    const endDate = new Date(year, this.getMonthIndex(month) + 1, 0);
+
+    // Formatting the dates as "yyyy-MM-dd" using DatePipe
+    this.startDate = this.datePipe.transform(startDate, 'yyyy-MM-dd');
+    this.endDate = this.datePipe.transform(endDate, 'yyyy-MM-dd');
+  }
+
+  sendData() {
+    this.extractDates();
+
+    const data = {
+      name: this.name1,
+      startDate: this.startDate,
+      endDate: this.endDate
+    };
+
+    // Send the data through the API
+    // ...
+    console.log(data); // Just for demonstration
+  }
+
+  private getMonthIndex(month: string): number {
+    const monthNames = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
+    return monthNames.findIndex(name => name === month.toUpperCase());
+  }
+}
